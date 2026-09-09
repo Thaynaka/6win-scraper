@@ -3,8 +3,8 @@ import time
 from supabase import create_client
 
 # Supabase Credentials
-SUPABASE_URL = "YOUR_SUPABASE_URL"
-SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY"
+SUPABASE_URL = "https://pxptveroxnlmqfvzvols.supabase.co"
+SUPABASE_KEY = "sb_publishable_x-19yQUi1dFT5cZnjg0zkg_iqduJuyZ"
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # API Details
