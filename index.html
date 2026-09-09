@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>6win598 Live B/S Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #ffffff; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; }
+        h1 { text-align: center; color: #f39c12; font-size: 24px; margin-bottom: 20px; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .card { background: #1e1e1e; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #333; }
+        .card h3 { margin: 0; font-size: 12px; color: #888; text-transform: uppercase; }
+        .card p { margin: 8px 0 0 0; font-size: 22px; font-weight: bold; }
+        
+        .section-title { font-size: 14px; color: #aaa; margin: 15px 0 8px 0; }
+        
+        /* Pattern Grid Matrix */
+        .grid-container { display: flex; gap: 8px; background: #1a1a1a; padding: 12px; border-radius: 10px; overflow-x: auto; min-height: 90px; align-items: center; border: 1px solid #333; }
+        .block { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .box { width: 36px; height: 36px; color: #fff; font-weight: bold; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
+        .bg-b { background-color: #e74c3c; }
+        .bg-s { background-color: #3498db; }
+        .period { font-size: 10px; color: #777; }
+        
+        /* History Table */
+        .table-box { background: #1e1e1e; border-radius: 10px; border: 1px solid #333; overflow: hidden; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: center; padding: 10px; border-bottom: 1px solid #2a2a2a; font-size: 14px; }
+        th { color: #888; background: #181818; font-size: 12px; }
+        .badge { padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+        .badge-b { background-color: rgba(231, 76, 60, 0.2); color: #e74c3c; border: 1px solid #e74c3c; }
+        .badge-s { background-color: rgba(52, 152, 219, 0.2); color: #3498db; border: 1px solid #3498db; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 6win598 Live B/S Pattern Dashboard</h1>
+        
+        <div class="stats-grid">
+            <div class="card"><h3>Total Gathered</h3><p id="total">0</p></div>
+            <div class="card"><h3>Big (B) Ratio</h3><p id="bigs" style="color:#e74c3c;">0 (0%)</p></div>
+            <div class="card"><h3>Small (S) Ratio</h3><p id="smalls" style="color:#3498db;">0 (0%)</p></div>
+            <div class="card"><h3>Current Streak</h3><p id="streak" style="color:#f39c12;">-</p></div>
+        </div>
+
+        <div class="section-title">Pattern Grid (Live -> Right)</div>
+        <div id="grid" class="grid-container">
+            <span style="color:#666; font-size:13px;">Fetching data from Supabase...</span>
+        </div>
+
+        <div class="section-title">Recent Game History</div>
+        <div class="table-box">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                        <th>Number</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <tr><td colspan="3" style="color:#666;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Supabase Credentials (သင့် Supabase Dashboard မှ Key များနှင့် အစားထိုးပါ)
+        const SUPABASE_URL = "https://pxptveroxnlmqfvzvols.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_x-19yQUi1dFT5cZnjg0zkg_iqduJuyZ";
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function loadLiveData() {
+            const { data, error } = await db
+                .from('bs_history')
+                .select('*')
+                .order('period', { ascending: false })
+                .limit(50);
+
+            if (error) {
+                console.error("Supabase Error:", error);
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                document.getElementById('grid').innerHTML = '<span style="color:#666;">No data found in Supabase table yet.</span>';
+                return;
+            }
+
+            // Stats Calculation
+            let total = data.length;
+            let bigs = data.filter(d => d.result === 'B').length;
+            let smalls = data.filter(d => d.result === 'S').length;
+
+            document.getElementById('total').innerText = total;
+            document.getElementById('bigs').innerText = `${bigs} (${((bigs/total)*100).toFixed(0)}%)`;
+            document.getElementById('smalls').innerText = `${smalls} (${((smalls/total)*100).toFixed(0)}%)`;
+
+            // Calculate Streak
+            if (total > 0) {
+                let last = data[0].result;
+                let streak = 0;
+                for (let d of data) {
+                    if (d.result === last) streak++;
+                    else break;
+                }
+                document.getElementById('streak').innerText = `${streak}x ${last === 'B' ? 'BIG' : 'SMALL'}`;
+                document.getElementById('streak').style.color = last === 'B' ? '#e74c3c' : '#3498db';
+            }
+
+            // Render Block Pattern Grid (Left to Right)
+            let reversed = [...data].reverse();
+            let gridHTML = reversed.map(d => `
+                <div class="block">
+                    <div class="box ${d.result === 'B' ? 'bg-b' : 'bg-s'}">${d.result}</div>
+                    <span class="period">${d.period.slice(-3)}</span>
+                </div>
+            `).join('');
+            
+            let gridEl = document.getElementById('grid');
+            gridEl.innerHTML = gridHTML;
+            gridEl.scrollLeft = gridEl.scrollWidth; // Auto scroll to latest rightmost item
+
+            // Render History Table
+            document.getElementById('table-body').innerHTML = data.slice(0, 15).map(d => `
+                <tr>
+                    <td>${d.period}</td>
+                    <td><b>${d.number}</b></td>
+                    <td><span class="badge ${d.result === 'B' ? 'badge-b' : 'badge-s'}">${d.result === 'B' ? 'BIG' : 'SMALL'}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // Initial Load & 5 Seconds Auto Refresh
+        loadLiveData();
+        setInterval(loadLiveData, 5000);
+    </script>
+</body>
+</html>
